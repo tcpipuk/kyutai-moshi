@@ -4,7 +4,7 @@
 
 See the [top-level README.md](../README.md) for more information on Moshi.
 
-This provides Go bindings for Moshi via C FFI. The package wraps **Mimi**, the streaming neural audio codec, with an idiomatic Go API.
+This provides Go bindings for Moshi via C FFI. The package provides idiomatic Go APIs for **Mimi** (the streaming neural audio codec), **ASR** (automatic speech recognition), and **TTS** (text-to-speech synthesis).
 
 See the [package documentation](https://pkg.go.dev/github.com/kyutai-labs/moshi/go/moshi) for the complete API reference.
 

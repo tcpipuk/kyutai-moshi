@@ -16,10 +16,8 @@
 //
 // Currently implemented:
 //   - Mimi: High-efficiency audio codec (24 kHz → 12.5 Hz, 1.1 kbps)
-//
-// Planned:
-//   - ASR: Automatic speech recognition
-//   - TTS: Text-to-speech synthesis
+//   - ASR: Automatic speech recognition with word-level timing
+//   - TTS: Text-to-speech synthesis with optional speaker conditioning
 //
 // # Memory Management
 //
