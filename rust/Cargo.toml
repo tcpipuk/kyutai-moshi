@@ -4,6 +4,7 @@ members = [
     "moshi-backend",
     "moshi-cli",
     "moshi-core",
+    "moshi-ffi",
     "moshi-server",
 ]
 resolver = "2"

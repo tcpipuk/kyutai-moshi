@@ -1,0 +1,22 @@
+[package]
+name = "moshi-ffi"
+version.workspace = true
+edition.workspace = true
+description = "C FFI bindings for Moshi audio AI library"
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+license.workspace = true
+
+[lib]
+name = "moshi_ffi"
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+moshi = { workspace = true }
+anyhow = { workspace = true }
+serde_json = { workspace = true }
+libc = "0.2"
+
+[build-dependencies]
+cbindgen = "0.27"
