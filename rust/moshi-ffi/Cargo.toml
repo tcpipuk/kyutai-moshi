@@ -16,6 +16,10 @@ crate-type = ["cdylib", "staticlib"]
 moshi = { workspace = true }
 anyhow = { workspace = true }
 serde_json = { workspace = true }
+serde = { workspace = true }
+sentencepiece = { workspace = true }
+tokenizers = { workspace = true }
+candle-transformers = { workspace = true }
 libc = "0.2"
 
 [build-dependencies]

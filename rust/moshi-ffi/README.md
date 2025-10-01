@@ -5,7 +5,7 @@
 
 See the [top-level README.md](../../README.md) for more information on Moshi.
 
-This provides C FFI bindings for Moshi, including **Mimi**, the streaming neural audio codec. The C-compatible API enables use from Go, C++, and other languages.
+This provides C FFI bindings for Moshi, including **Mimi** (the streaming neural audio codec), **ASR** (automatic speech recognition), and **TTS** (text-to-speech synthesis). The C-compatible API enables use from Go, C++, and other languages.
 
 See the [crate documentation](https://docs.rs/moshi-ffi) for the complete API reference.
 

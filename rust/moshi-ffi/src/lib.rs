@@ -105,12 +105,16 @@
 //! - **Buffer sizes**: Input buffer sizes must match the actual data dimensions
 //! - **Concurrent access**: Do not access the same handle from multiple threads
 
+pub mod asr;
 pub mod error;
 pub mod mimi;
+pub mod tts;
 
 // Re-export public types and functions
+pub use asr::{MoshiASR, moshi_asr_free, moshi_asr_new, moshi_asr_reset, moshi_asr_transcribe};
 pub use error::{MoshiError, moshi_clear_error, moshi_free_string, moshi_last_error};
 pub use mimi::{
     MoshiMimi, moshi_free_buffer, moshi_mimi_decode, moshi_mimi_encode, moshi_mimi_free,
     moshi_mimi_new,
 };
+pub use tts::{MoshiTTS, moshi_tts_free, moshi_tts_new, moshi_tts_synthesise};
