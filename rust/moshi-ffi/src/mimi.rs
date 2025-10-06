@@ -318,28 +318,84 @@ pub unsafe extern "C" fn moshi_mimi_decode(
     }
 }
 
-/// Free a buffer allocated by moshi functions
+/// Reset Mimi internal state
 ///
-/// Frees memory allocated by `moshi_mimi_encode` or `moshi_mimi_decode` for output buffers.
-/// After calling this function, the pointer becomes invalid and must not be used.
+/// Clears the internal state of the Mimi codec, including streaming buffers and caches.
+/// This should be called between unrelated audio streams to prevent context from one
+/// stream affecting another. After reset, the instance is ready to process a new audio stream.
 ///
 /// # Parameters
-/// - `ptr`: Pointer to a buffer allocated by `moshi_mimi_encode` or `moshi_mimi_decode`, or null
+/// - `mimi`: Pointer to a `MoshiMimi` instance
+///
+/// # Returns
+/// - `MoshiError::Ok` (0) on success
+/// - Non-zero error code on failure (retrieve message via `moshi_last_error`)
 ///
 /// # Safety
-/// - `ptr` must be null, or must have been returned by `moshi_mimi_encode`/`moshi_mimi_decode`
+/// - `mimi` must be a valid pointer to a `MoshiMimi` instance
+/// - `mimi` must not be null
+/// - Do not call this function concurrently with encode/decode on the same instance
+///
+/// # Thread Safety
+/// Not thread-safe for the same `mimi` instance. Do not call reset concurrently with
+/// encode/decode operations on the same instance.
+#[no_mangle]
+pub unsafe extern "C" fn moshi_mimi_reset(mimi: *mut MoshiMimi) -> MoshiError {
+    if mimi.is_null() {
+        return MoshiError::NullPointer;
+    }
+
+    let mimi = &mut *mimi;
+    mimi.mimi.reset_state();
+    MoshiError::Ok
+}
+
+/// Free a codes buffer allocated by moshi_mimi_encode
+///
+/// Properly deallocates a uint32 codes buffer using Rust's allocator by reconstructing
+/// the original Vec and allowing it to drop.
+///
+/// # Parameters
+/// - `ptr`: Pointer to a codes buffer returned by `moshi_mimi_encode`, or null
+/// - `size`: Total number of uint32 elements in the buffer (batch * codebooks * steps)
+///
+/// # Safety
+/// - `ptr` must be null, or must have been returned by `moshi_mimi_encode`
+/// - `size` must exactly match the size used when the buffer was allocated
 /// - `ptr` must not have been previously freed
 /// - After this call, `ptr` becomes invalid and must not be dereferenced
 ///
 /// # Thread Safety
 /// This function is thread-safe. Different threads can free different buffers concurrently.
 #[no_mangle]
-pub unsafe extern "C" fn moshi_free_buffer(ptr: *mut std::ffi::c_void) {
-    if !ptr.is_null() {
-        // We don't know the original type/size, so we can't properly deallocate
-        // This is a limitation - in practice, we'd need separate free functions
-        // for each buffer type, or store size metadata
-        // For now, this is a placeholder that matches the API design
-        libc::free(ptr);
+pub unsafe extern "C" fn moshi_free_codes_buffer(ptr: *mut u32, size: usize) {
+    if !ptr.is_null() && size > 0 {
+        // Reconstruct the Vec with exact size and capacity, then drop it
+        let _ = Vec::from_raw_parts(ptr, size, size);
+    }
+}
+
+/// Free a PCM buffer allocated by moshi_mimi_decode
+///
+/// Properly deallocates a float32 PCM buffer using Rust's allocator by reconstructing
+/// the original Vec and allowing it to drop.
+///
+/// # Parameters
+/// - `ptr`: Pointer to a PCM buffer returned by `moshi_mimi_decode`, or null
+/// - `size`: Total number of float32 elements in the buffer (batch * channels * samples)
+///
+/// # Safety
+/// - `ptr` must be null, or must have been returned by `moshi_mimi_decode`
+/// - `size` must exactly match the size used when the buffer was allocated
+/// - `ptr` must not have been previously freed
+/// - After this call, `ptr` becomes invalid and must not be dereferenced
+///
+/// # Thread Safety
+/// This function is thread-safe. Different threads can free different buffers concurrently.
+#[no_mangle]
+pub unsafe extern "C" fn moshi_free_pcm_buffer(ptr: *mut f32, size: usize) {
+    if !ptr.is_null() && size > 0 {
+        // Reconstruct the Vec with exact size and capacity, then drop it
+        let _ = Vec::from_raw_parts(ptr, size, size);
     }
 }

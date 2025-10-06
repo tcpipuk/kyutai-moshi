@@ -34,6 +34,29 @@
 // overhead compared to zero-copy approaches, it prevents memory corruption and
 // use-after-free errors that are common in FFI code.
 //
+// # Concurrency and Instance Pooling
+//
+// All Moshi components use a pool architecture. By default, pools are configured
+// with max=1 instance, providing thread-safe access via internal serialisation.
+// For concurrent processing, configure a larger pool size using options.
+//
+// Default mode (max=1): Thread-safe, serialised access, suitable for most applications.
+//
+//	// All calls serialised through single instance
+//	codec, _ := moshi.NewMimi(modelPath, config)
+//	// Safe to call codec.Encode() from multiple goroutines
+//
+// Concurrent mode: True parallelism with multiple independent instances.
+// Each pool instance contains a complete model, so configure based on memory budget.
+//
+//	// True concurrent processing with up to 4 parallel instances
+//	codec, _ := moshi.NewMimi(modelPath, config, moshi.WithMimiPool(1, 4))
+//	// Multiple goroutines can process in parallel
+//
+// Memory per instance: ~250MB (Mimi), ~2GB (ASR), ~1.5GB (TTS). For most home
+// users handling 1-2 streams, the default max=1 is ideal. Use larger pool sizes
+// when you need true concurrent processing and have memory budget for multiple instances.
+//
 // # Error Handling
 //
 // All fallible operations return standard Go errors. Detailed error messages from

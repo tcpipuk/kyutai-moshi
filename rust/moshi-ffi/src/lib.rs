@@ -33,9 +33,10 @@
 //! ## Output Buffers
 //!
 //! Functions that return audio or token data allocate buffers that the caller owns:
-//! - `moshi_mimi_encode` returns token arrays via `codes_out`
-//! - `moshi_mimi_decode` returns PCM arrays via `pcm_out`
-//! - Caller must free these with `moshi_free_buffer` when done
+//! - `moshi_mimi_encode` returns token arrays via `codes_out` - free with `moshi_free_codes_buffer`
+//! - `moshi_mimi_decode` returns PCM arrays via `pcm_out` - free with `moshi_free_pcm_buffer`
+//! - `moshi_tts_synthesise` returns PCM arrays via `pcm_out` - free with `moshi_free_pcm_buffer`
+//! - Caller must pass the correct buffer size when freeing
 //! - Buffers remain valid until explicitly freed
 //!
 //! ## Error Strings
@@ -53,13 +54,14 @@
 //!
 //! // Encode audio (FFI allocates output buffer)
 //! uint32_t* codes;
-//! int dims[3];
+//! size_t dims[3];
 //! moshi_mimi_encode(codec, pcm, 1, 1, 24000, &codes, dims);
 //!
 //! // Use the codes...
+//! size_t size = dims[0] * dims[1] * dims[2];
 //!
 //! // Free output buffer (caller's responsibility)
-//! moshi_free_buffer(codes);
+//! moshi_free_codes_buffer(codes, size);
 //!
 //! // Free codec (caller's responsibility)
 //! moshi_mimi_free(codec);
@@ -114,7 +116,7 @@ pub mod tts;
 pub use asr::{MoshiASR, moshi_asr_free, moshi_asr_new, moshi_asr_reset, moshi_asr_transcribe};
 pub use error::{MoshiError, moshi_clear_error, moshi_free_string, moshi_last_error};
 pub use mimi::{
-    MoshiMimi, moshi_free_buffer, moshi_mimi_decode, moshi_mimi_encode, moshi_mimi_free,
-    moshi_mimi_new,
+    MoshiMimi, moshi_free_codes_buffer, moshi_free_pcm_buffer, moshi_mimi_decode,
+    moshi_mimi_encode, moshi_mimi_free, moshi_mimi_new, moshi_mimi_reset,
 };
-pub use tts::{MoshiTTS, moshi_tts_free, moshi_tts_new, moshi_tts_synthesise};
+pub use tts::{MoshiTTS, moshi_tts_free, moshi_tts_new, moshi_tts_reset, moshi_tts_synthesise};

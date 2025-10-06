@@ -121,7 +121,7 @@ pub unsafe extern "C" fn moshi_tts_new(
         };
 
         // Load T5 encoder
-        let t5_config = candle_transformers::models::t5::Config::config_t5_base();
+        let t5_config = candle_transformers::models::t5::Config::musicgen_small();
         let vb_t5 = candle_nn::VarBuilder::from_mmaped_safetensors(
             &[PathBuf::from(t5_path)],
             dtype,
@@ -217,6 +217,36 @@ pub unsafe extern "C" fn moshi_tts_free(tts: *mut MoshiTTS) {
     }
 }
 
+/// Reset the TTS state
+///
+/// Clears the internal state of the TTS instance, including the Mimi codec state.
+/// This should be called between unrelated synthesis requests to prevent context from
+/// one request affecting another.
+///
+/// # Parameters
+/// - `tts`: Pointer to a `MoshiTTS` instance
+///
+/// # Returns
+/// - `MoshiError::Ok` (0) on success
+/// - Non-zero error code on failure (retrieve message via `moshi_last_error`)
+///
+/// # Safety
+/// - `tts` must be a valid pointer to a `MoshiTTS` instance
+///
+/// # Thread Safety
+/// Not thread-safe for the same `tts` instance. Do not call reset whilst other operations
+/// are in progress on the same instance.
+#[no_mangle]
+pub unsafe extern "C" fn moshi_tts_reset(tts: *mut MoshiTTS) -> MoshiError {
+    if tts.is_null() {
+        return MoshiError::NullPointer;
+    }
+
+    let tts = &mut *tts;
+    tts.mimi.reset_state();
+    MoshiError::Ok
+}
+
 /// Synthesise speech from text
 ///
 /// Converts text into PCM audio samples using the TTS model. The text is tokenized,
@@ -286,9 +316,10 @@ pub unsafe extern "C" fn moshi_tts_synthesise(
 
         // Convert token IDs to tensor
         let token_ids: Vec<u32> = token_ids.iter().map(|&id| id).collect();
-        let dev = tts.model.lm.device();
+        let dev = tts.model.lm.device().clone();
+        let token_len = token_ids.len();
         let token_tensor =
-            candle::Tensor::from_vec(token_ids, (1, token_ids.len()), dev)?
+            candle::Tensor::from_vec(token_ids, (1, token_len), &dev)?
                 .to_dtype(candle::DType::U32)?;
 
         // Prepare speaker audio if provided
@@ -297,7 +328,7 @@ pub unsafe extern "C" fn moshi_tts_synthesise(
             Some(candle::Tensor::from_slice(
                 speaker_slice,
                 (1, 1, speaker_samples),
-                dev,
+                &dev,
             )?)
         } else {
             None
@@ -325,7 +356,7 @@ pub unsafe extern "C" fn moshi_tts_synthesise(
 
         // Decode audio tokens to PCM
         let codes_tensor =
-            candle::Tensor::from_vec(flat_tokens, (1, codebooks, steps), dev)?;
+            candle::Tensor::from_vec(flat_tokens, (1, codebooks, steps), &dev)?;
         let pcm_tensor = tts.mimi.decode(&codes_tensor)?;
         let pcm_vec = pcm_tensor.to_vec3::<f32>()?;
 

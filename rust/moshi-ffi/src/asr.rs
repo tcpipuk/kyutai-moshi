@@ -109,7 +109,7 @@ pub unsafe extern "C" fn moshi_asr_new(
         )?;
 
         // Create LM config for ASR
-        let lm_config = moshi::lm::Config::asr_v0_1();
+        let lm_config = moshi::lm::Config::asr_v0_1_1b();
         let lm = LmModel::new(&lm_config, moshi::nn::MaybeQuantizedVarBuilder::Real(vb_lm))?;
 
         // Load audio tokenizer (Mimi)
@@ -251,7 +251,7 @@ pub unsafe extern "C" fn moshi_asr_transcribe(
                 } => {
                     let text = asr
                         .text_tokenizer
-                        .decode(&tokens)
+                        .decode_piece_ids(&tokens)
                         .map_err(|e| anyhow::anyhow!("Failed to decode tokens: {}", e))?;
                     json_objects.push(serde_json::json!({
                         "type": "word",
@@ -318,6 +318,6 @@ pub unsafe extern "C" fn moshi_asr_reset(asr: *mut MoshiASR) -> MoshiError {
 
     match asr.state.reset() {
         Ok(()) => MoshiError::Ok,
-        Err(e) => from_anyhow(e),
+        Err(e) => from_anyhow(e.into()),
     }
 }
